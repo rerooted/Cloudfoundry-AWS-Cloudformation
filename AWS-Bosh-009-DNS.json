@@ -197,7 +197,7 @@
         "Type": "A",
         "AliasTarget": {
           "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbDnsName" } },
-          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbCanonicalHostedZoneID" } }
+          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbCanonicalHostedZoneNameID" } }
         }
       }
     },
@@ -225,7 +225,7 @@
         "Type": "A",
         "AliasTarget": {
           "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbDnsName" } },
-          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbCanonicalHostedZoneID" } }
+          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbCanonicalHostedZoneNameID" } }
         }
       }
     },
