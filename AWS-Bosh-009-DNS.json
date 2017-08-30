@@ -151,7 +151,7 @@
         "TTL": "3600",
         "Type": "A",
         "AliasTarget": {
-          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } },
+          "DNSName": { "Fn::Join": [ "" [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } }, "." ] ] },
           "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbCanonicalHostedZoneID" } }
         }
       }
@@ -196,7 +196,7 @@
         "TTL": "3600",
         "Type": "A",
         "AliasTarget": {
-          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbDnsName" } },
+          "DNSName": { "Fn::Join": [ "" [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbDnsName" } }, "." ] ] },
           "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbCanonicalHostedZoneNameID" } }
         }
       }
@@ -224,7 +224,7 @@
         "TTL": "3600",
         "Type": "A",
         "AliasTarget": {
-          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbDnsName" } },
+          "DNSName": { "Fn::Join": [ "" [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbDnsName" } }, "." ] ] },
           "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbCanonicalHostedZoneNameID" } }
         }
       }
@@ -311,7 +311,7 @@
         "TTL": "3600",
         "Type": "A",
         "AliasTarget": {
-          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } },
+          "DNSName": { "Fn::Join": [ "" [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } }, "." ] ] },
           "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbCanonicalHostedZoneID" } }
         }
       }
