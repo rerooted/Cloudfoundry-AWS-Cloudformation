@@ -137,27 +137,23 @@
         { "Fn::Equals": [ { "Ref": "DeployElb" }, "false" ] }
       ]
     },
-    "AllocateBoshIp": { "Fn::Equals": [ { "Ref": "AllocateBoshPublicIp" }, "true" ] },
-    "DeployElbOrAllocateBoshIp": {
-      "Fn::Or": [
-        { "Fn::Equals": [ { "Ref": "AllocateBoshPublicIp" }, "true" ] },
-        { "Fn::Equals": [ { "Ref": "DeployElb" }, "true" ] }
-      ]
-    }
+    "AllocateBoshIp": { "Fn::Equals": [ { "Ref": "AllocateBoshPublicIp" }, "true" ] }
   },
 
   "Resources": {
-    "AppsApplicationElbDnsRr": {
+    "AppsExternalElbDnsRr": {
       "Type": "AWS::Route53::RecordSet",
       "Condition": "DeployElb",
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "*.apps", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "Application ELB DNS Name",
         "TTL": "3600",
-        "Type": "CNAME",
-        "ResourceRecords": [
-          { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } }
-        ]
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } },
+          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbCanonicalHostedZoneID" } }
+        }
       }
     },
 
@@ -167,6 +163,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "*.apps", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "Applications IP DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -180,6 +177,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "*.apps", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "Application DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -194,37 +192,41 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "ssh.system", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment":"CF SSH ELB DNS Name",
         "TTL": "3600",
-        "Type": "CNAME",
-        "ResourceRecords": [
-          { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbDnsName" } }
-        ]
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbDnsName" } },
+          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-CfSshElbCanonicalHostedZoneID" } }
+        }
       }
     },
 
-    "DirectorDnsRr": {
+    "DirectorDnsARr": {
       "Type": "AWS::Route53::RecordSet",
-      "Condition": "DeployElbOrAllocateBoshIp",
+      "Condition": "AllocateBoshIp",
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "director", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "Director IP DNS Name",
         "TTL": "3600",
-        "Type": {
-          "Fn::If": [
-            "DeployElb",
-            "CNAME",
-            "A"
-          ]
-        },
-        "ResourceRecords": [
-          {
-            "Fn::If": [
-              "DeployElb",
-              { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbDnsName" } },
-              { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-BoshLitePublicIp" } }
-            ]
-          }
-        ]
+        "Type": "A",
+        "ResourceRecords": [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-BoshLitePublicIp" } } ]
+      }
+    },
+    "DirectorDnsAliasRr": {
+      "Type": "AWS::Route53::RecordSet",
+      "Condition": "DeployElb",
+      "Properties": {
+        "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
+        "Name": { "Fn::Join": [ ".", [ "director", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "Director ELB DNS Name",
+        "TTL": "3600",
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbDnsName" } },
+          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-DirectorElbCanonicalHostedZoneID" } }
+        }
       }
     },
 
@@ -234,6 +236,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "nat", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "NAT AZ1 DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -247,6 +250,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "nat", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "NAT AZ1-3 DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -261,6 +265,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "nat-z1", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "NAT AZ1 DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -274,6 +279,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "nat-z2", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "NAT AZ2 DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -287,6 +293,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "nat-z3", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "NAT AZ3 DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -300,11 +307,13 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "*.system", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "System ELB DNS Name",
         "TTL": "3600",
-        "Type": "CNAME",
-        "ResourceRecords": [
-          { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } }
-        ]
+        "Type": "A",
+        "AliasTarget": {
+          "DNSName": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbDnsName" } },
+          "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-ApplicationElbCanonicalHostedZoneID" } }
+        }
       }
     },
     "SystemExternalSingleAzIpDnsRR": {
@@ -313,6 +322,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "*.system", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "System IP DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
@@ -326,6 +336,7 @@
       "Properties": {
         "HostedZoneName": { "Fn::Join": [ "", [ { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } }, "." ] ] },
         "Name": { "Fn::Join": [ ".", [ "*.system", { "Ref": "DeploymentName" }, { "Fn::ImportValue": { "Fn::Sub": "${DeploymentName}-HostedZone" } } ] ] },
+        "Comment": "System IP DNS Name",
         "TTL": "3600",
         "Type": "A",
         "ResourceRecords": [
